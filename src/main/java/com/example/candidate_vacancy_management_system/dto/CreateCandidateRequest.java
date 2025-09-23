@@ -1,8 +1,4 @@
-package com.example.candidate_vacancy_management_system.model;
-
-import java.util.Date;
-
-import org.springframework.data.mongodb.core.mapping.Document;
+package com.example.candidate_vacancy_management_system.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,14 +9,11 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "candidates")
-public class Candidate {
-    private String id;
+public class CreateCandidateRequest {
     private String firstName;
     private String lastName;
     private String email;
-
-    private Date birthdate;
+    private String birthdate;
     private String gender;
     private double currentSalary;
     private String educationLevel;
