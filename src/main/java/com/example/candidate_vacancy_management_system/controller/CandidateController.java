@@ -1,15 +1,21 @@
 package com.example.candidate_vacancy_management_system.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.candidate_vacancy_management_system.dto.BaseResponse;
 import com.example.candidate_vacancy_management_system.dto.CreateCandidateRequest;
+import com.example.candidate_vacancy_management_system.dto.PaginationInfo;
+import com.example.candidate_vacancy_management_system.dto.PaginationResponse;
+import com.example.candidate_vacancy_management_system.dto.SearchRequest;
 import com.example.candidate_vacancy_management_system.model.Candidate;
 import com.example.candidate_vacancy_management_system.service.CandidateService;
 import com.example.candidate_vacancy_management_system.exception.BadRequestException;
@@ -34,5 +40,21 @@ public class CandidateController {
         } catch (IllegalArgumentException e) {
             throw new BadRequestException(e.getMessage());
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<BaseResponse<PaginationResponse<Candidate>>> findCandidates(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+
+        SearchRequest request = new SearchRequest(search, page, size);
+        Page<Candidate> candidates = candidateService.getAll(request);
+
+        PaginationResponse<Candidate> response = new PaginationResponse<>(
+                candidates.getContent(),
+                PaginationInfo.createPagination(candidates));
+
+        return new ResponseEntity<>(
+                new BaseResponse<PaginationResponse<Candidate>>(HttpStatus.OK.value(), true, response), HttpStatus.OK);
     }
 }

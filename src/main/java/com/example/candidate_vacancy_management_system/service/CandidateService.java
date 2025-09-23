@@ -5,9 +5,13 @@ import java.util.Date;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.candidate_vacancy_management_system.dto.CreateCandidateRequest;
+import com.example.candidate_vacancy_management_system.dto.SearchRequest;
 import com.example.candidate_vacancy_management_system.model.Candidate;
 import com.example.candidate_vacancy_management_system.repository.CandidateRepository;
 
@@ -46,5 +50,17 @@ public class CandidateService {
         candidate.setSchoolName(request.getSchoolName());
 
         return candidateRepository.save(candidate);
+    }
+
+    public Page<Candidate> getAll(SearchRequest request) {
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+        String query = request.getSearch();
+
+        if (query == null || query.trim().isEmpty()) {
+            return candidateRepository.findAll(pageable);
+        } else {
+            return candidateRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query, query,
+                    pageable);
+        }
     }
 }
