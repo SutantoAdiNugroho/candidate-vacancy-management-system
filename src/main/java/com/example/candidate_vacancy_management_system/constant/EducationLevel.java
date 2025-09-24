@@ -1,4 +1,4 @@
-package com.example.candidate_vacancy_management_system.model;
+package com.example.candidate_vacancy_management_system.constant;
 
 public enum EducationLevel {
     SD("SD"),
@@ -16,9 +16,8 @@ public enum EducationLevel {
 
     public static boolean isValidEducationLevel(String level) {
         for (EducationLevel eLevel : EducationLevel.values()) {
-            if (eLevel.level.equals(level)) {
+            if (eLevel.level.equals(level))
                 return true;
-            }
         }
         return false;
     }

@@ -2,7 +2,6 @@ package com.example.candidate_vacancy_management_system.service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,11 +10,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.example.candidate_vacancy_management_system.dto.CreateCandidateRequest;
-import com.example.candidate_vacancy_management_system.dto.SearchRequest;
-import com.example.candidate_vacancy_management_system.dto.UpdateCandidateRequest;
+import com.example.candidate_vacancy_management_system.constant.EducationLevel;
+import com.example.candidate_vacancy_management_system.dto.candidate.CreateCandidateRequest;
+import com.example.candidate_vacancy_management_system.dto.candidate.SearchRequest;
+import com.example.candidate_vacancy_management_system.dto.candidate.UpdateCandidateRequest;
 import com.example.candidate_vacancy_management_system.model.Candidate;
-import com.example.candidate_vacancy_management_system.model.EducationLevel;
 import com.example.candidate_vacancy_management_system.repository.CandidateRepository;
 
 @Service
@@ -29,32 +28,35 @@ public class CandidateService {
     }
 
     public Candidate create(CreateCandidateRequest request) {
+        this.validateInput(request);
+
+        // check duplicate email
         Optional<Candidate> existingCandidate = candidateRepository.findByEmail(request.getEmail());
         if (existingCandidate.isPresent()) {
             throw new IllegalArgumentException("candidate with this email already exist");
         }
 
-        if (!EducationLevel.isValidEducationLevel(request.getEducationLevel())) {
-            throw new IllegalArgumentException("invalid education level input");
-        }
-
-        // birthdate validation
-        Date birthdate;
-        try {
-            birthdate = new SimpleDateFormat("dd-MM-yyyy").parse(request.getBirthdate());
-        } catch (Exception e) {
-            throw new IllegalArgumentException("birthdate format must be dd-mm-yyyy");
-        }
-
         Candidate candidate = new Candidate();
-        candidate.setFirstName(request.getFirstName());
-        candidate.setLastName(request.getLastName());
-        candidate.setEmail(request.getEmail());
-        candidate.setBirthdate(birthdate);
-        candidate.setGender(request.getGender());
+
+        if (request.getGender().equalsIgnoreCase("male")
+                || request.getGender().equalsIgnoreCase("female")) {
+            candidate.setGender(request.getGender().toLowerCase());
+        } else {
+            throw new IllegalArgumentException("gender must be 'male' or 'female'");
+        }
+
+        try {
+            candidate.setBirthdate(new SimpleDateFormat("dd-MM-yyyy").parse(request.getBirthdate()));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("birthdate format must be dd-MM-yyyy");
+        }
+
+        candidate.setFirstName(request.getFirstName().trim());
+        candidate.setLastName(request.getLastName().trim());
+        candidate.setEmail(request.getEmail().trim().toLowerCase());
         candidate.setCurrentSalary(request.getCurrentSalary());
         candidate.setEducationLevel(request.getEducationLevel());
-        candidate.setSchoolName(request.getSchoolName());
+        candidate.setSchoolName(request.getSchoolName().trim());
 
         return candidateRepository.save(candidate);
     }
@@ -76,11 +78,9 @@ public class CandidateService {
     }
 
     public Candidate update(String id, UpdateCandidateRequest reqCandidate) {
-        return candidateRepository.findById(id).map(candidate -> {
-            if (!EducationLevel.isValidEducationLevel(reqCandidate.getEducationLevel())) {
-                throw new IllegalArgumentException("invalid education level input");
-            }
+        this.validateInput(reqCandidate);
 
+        return candidateRepository.findById(id).map(candidate -> {
             if (reqCandidate.getBirthdate() != null) {
                 try {
                     candidate.setBirthdate(new SimpleDateFormat("dd-MM-yyyy").parse(reqCandidate.getBirthdate()));
@@ -89,19 +89,19 @@ public class CandidateService {
                 }
             }
 
-            if (reqCandidate.getGender() != null) {
-                if (reqCandidate.getGender().equalsIgnoreCase("male")
-                        && reqCandidate.getGender().equalsIgnoreCase("female"))
-                    candidate.setGender(reqCandidate.getGender());
-
+            if (reqCandidate.getGender().equalsIgnoreCase("male")
+                    || reqCandidate.getGender().equalsIgnoreCase("female")) {
+                candidate.setGender(reqCandidate.getGender().toLowerCase());
+            } else {
                 throw new IllegalArgumentException("gender must be 'male' or 'female'");
             }
 
-            candidate.setFirstName(reqCandidate.getFirstName());
-            candidate.setLastName(reqCandidate.getLastName());
+            candidate.setFirstName(reqCandidate.getFirstName().trim());
+            candidate.setLastName(reqCandidate.getLastName().trim());
+            candidate.setEmail(reqCandidate.getEmail().trim().toLowerCase());
             candidate.setCurrentSalary(reqCandidate.getCurrentSalary());
             candidate.setEducationLevel(reqCandidate.getEducationLevel());
-            candidate.setSchoolName(reqCandidate.getSchoolName());
+            candidate.setSchoolName(reqCandidate.getSchoolName().trim());
 
             return candidateRepository.save(candidate);
         }).orElseThrow(() -> new IllegalArgumentException("candidate with that id not found"));
@@ -114,5 +114,38 @@ public class CandidateService {
         }
 
         candidateRepository.deleteById(id);
+    }
+
+    private void validateInput(CreateCandidateRequest request) {
+        if (request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("firstName is required");
+        }
+        if (request.getLastName() == null || request.getLastName().trim().isEmpty()) {
+            throw new IllegalArgumentException("lastName is required");
+        }
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("email is required");
+        }
+        if (request.getBirthdate() == null || request.getBirthdate().trim().isEmpty()) {
+            throw new IllegalArgumentException("birthdate is required");
+        }
+        if (request.getEducationLevel() == null || request.getEducationLevel().trim().isEmpty()) {
+            throw new IllegalArgumentException("educationLevel is required");
+        }
+        if (request.getSchoolName() == null || request.getSchoolName().trim().isEmpty()) {
+            throw new IllegalArgumentException("schoolName is required");
+        }
+        if (request.getCurrentSalary() == null) {
+            throw new IllegalArgumentException("currentSalary is required");
+        }
+        if (request.getGender() == null || request.getGender().trim().isEmpty()) {
+            throw new IllegalArgumentException("gender is required");
+        }
+
+        // education validation
+        if (!EducationLevel.isValidEducationLevel(request.getEducationLevel())) {
+            throw new IllegalArgumentException("invalid education level input");
+        }
+
     }
 }

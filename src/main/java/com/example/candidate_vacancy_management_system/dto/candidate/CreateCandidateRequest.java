@@ -1,4 +1,4 @@
-package com.example.candidate_vacancy_management_system.dto;
+package com.example.candidate_vacancy_management_system.dto.candidate;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +15,7 @@ public class CreateCandidateRequest {
     private String email;
     private String birthdate;
     private String gender;
-    private double currentSalary;
+    private Integer currentSalary;
     private String educationLevel;
     private String schoolName;
 }

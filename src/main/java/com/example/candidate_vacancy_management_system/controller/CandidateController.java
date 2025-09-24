@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.candidate_vacancy_management_system.dto.BaseResponse;
-import com.example.candidate_vacancy_management_system.dto.CreateCandidateRequest;
 import com.example.candidate_vacancy_management_system.dto.PaginationInfo;
 import com.example.candidate_vacancy_management_system.dto.PaginationResponse;
-import com.example.candidate_vacancy_management_system.dto.SearchRequest;
-import com.example.candidate_vacancy_management_system.dto.UpdateCandidateRequest;
+import com.example.candidate_vacancy_management_system.dto.candidate.CreateCandidateRequest;
+import com.example.candidate_vacancy_management_system.dto.candidate.SearchRequest;
+import com.example.candidate_vacancy_management_system.dto.candidate.UpdateCandidateRequest;
 import com.example.candidate_vacancy_management_system.model.Candidate;
 import com.example.candidate_vacancy_management_system.service.CandidateService;
 import com.example.candidate_vacancy_management_system.exception.BadRequestException;

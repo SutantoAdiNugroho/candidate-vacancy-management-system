@@ -22,7 +22,7 @@ public class Candidate {
 
     private Date birthdate;
     private String gender;
-    private double currentSalary;
+    private Integer currentSalary;
     private String educationLevel;
     private String schoolName;
 }

@@ -1,20 +1,9 @@
 package com.example.candidate_vacancy_management_system.model;
 
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Data;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Document(collection = "criteria")
-public class Criteria {
-    private String id;
+@Data
+public abstract class Criteria {
+    private int weight;
     private String type;
-    private Integer weight;
-    private Object data;
 }

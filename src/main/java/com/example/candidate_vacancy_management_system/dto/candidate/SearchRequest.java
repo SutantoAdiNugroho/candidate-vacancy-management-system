@@ -1,4 +1,4 @@
-package com.example.candidate_vacancy_management_system.dto;
+package com.example.candidate_vacancy_management_system.dto.candidate;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
