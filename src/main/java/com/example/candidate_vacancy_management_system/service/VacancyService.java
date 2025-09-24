@@ -1,19 +1,26 @@
 package com.example.candidate_vacancy_management_system.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.candidate_vacancy_management_system.constant.CriteriaType;
+import com.example.candidate_vacancy_management_system.dto.candidate.SearchRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.AgeCriteriaRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.CreateCriteriaRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.CreateVacancyRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.EducationLevelRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.GenderCriteriaRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.SalaryCriteriaRequest;
+import com.example.candidate_vacancy_management_system.dto.vacancy.UpdateVacancyRequest;
 import com.example.candidate_vacancy_management_system.model.AgeCriteria;
+import com.example.candidate_vacancy_management_system.model.Candidate;
 import com.example.candidate_vacancy_management_system.model.Criteria;
 import com.example.candidate_vacancy_management_system.model.EducationLevelCriteria;
 import com.example.candidate_vacancy_management_system.model.GenderCriteria;
@@ -35,7 +42,7 @@ public class VacancyService {
     }
 
     public Vacancy create(CreateVacancyRequest request) {
-        validateCriteria(request.getCriteria());
+        this.validateVacancyInput(request);
 
         Vacancy vacancy = new Vacancy();
         vacancy.setName(request.getName());
@@ -45,9 +52,51 @@ public class VacancyService {
         return vacancyRepository.save(vacancy);
     }
 
-    private void validateCriteria(List<CreateCriteriaRequest> criteriaRequest) {
-        if (criteriaRequest == null || criteriaRequest.isEmpty()) {
+    public Page<Vacancy> getAll(SearchRequest request) {
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+        String query = request.getSearch();
+
+        if (query == null || query.trim().isEmpty()) {
+            return vacancyRepository.findAll(pageable);
+        } else {
+            return vacancyRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query,
+                    pageable);
+        }
+    }
+
+    public Optional<Vacancy> getById(String id) {
+        return vacancyRepository.findById(id);
+    }
+
+    public void delete(String id) {
+        Optional<Vacancy> vacancy = this.getById(id);
+        if (!vacancy.isPresent()) {
+            throw new IllegalArgumentException("vacancy with this id not exist");
+        }
+
+        vacancyRepository.deleteById(id);
+    }
+
+    public Vacancy update(String id, UpdateVacancyRequest request) {
+        this.validateVacancyInput(request);
+
+        return vacancyRepository.findById(id).map(vacancy -> {
+            vacancy.setName(request.getName());
+            vacancy.setDescription(request.getDescription());
+            vacancy.setCriteria(buildCriteria(request.getCriteria()));
+            return vacancyRepository.save(vacancy);
+        }).orElseThrow(() -> new IllegalArgumentException("vacancy with that id was not found"));
+    }
+
+    private void validateVacancyInput(CreateVacancyRequest request) {
+        if (request.getCriteria() == null || request.getCriteria().isEmpty()) {
             throw new IllegalArgumentException("vacancy must have at least one criteria");
+        }
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("name of vacancy is required");
+        }
+        if (request.getDescription() == null || request.getDescription().trim().isEmpty()) {
+            throw new IllegalArgumentException("description of vacancy is required");
         }
     }
 
