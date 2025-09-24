@@ -3,10 +3,10 @@ package com.example.candidate_vacancy_management_system.constant;
 public enum EducationLevel {
     SD("SD"),
     SMP("SMP"),
-    SMK("SMK"),
-    SARJANA("Sarjana"),
-    MASTER("Master"),
-    DOKTOR("Doktor");
+    SMA("SMA"),
+    SARJANA("SARJANA"),
+    MASTER("MASTER"),
+    DOKTOR("DOKTOR");
 
     private final String level;
 

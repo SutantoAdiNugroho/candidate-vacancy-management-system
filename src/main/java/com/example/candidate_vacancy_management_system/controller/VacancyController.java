@@ -1,7 +1,5 @@
 package com.example.candidate_vacancy_management_system.controller;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -20,12 +18,11 @@ import com.example.candidate_vacancy_management_system.dto.BaseResponse;
 import com.example.candidate_vacancy_management_system.dto.PaginationInfo;
 import com.example.candidate_vacancy_management_system.dto.PaginationResponse;
 import com.example.candidate_vacancy_management_system.dto.candidate.SearchRequest;
-import com.example.candidate_vacancy_management_system.dto.candidate.UpdateCandidateRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.CreateVacancyRequest;
+import com.example.candidate_vacancy_management_system.dto.vacancy.RankVacancyDetailResponse;
 import com.example.candidate_vacancy_management_system.dto.vacancy.UpdateVacancyRequest;
 import com.example.candidate_vacancy_management_system.exception.BadRequestException;
 import com.example.candidate_vacancy_management_system.exception.NotFoundException;
-import com.example.candidate_vacancy_management_system.model.Candidate;
 import com.example.candidate_vacancy_management_system.model.Vacancy;
 import com.example.candidate_vacancy_management_system.service.VacancyService;
 
@@ -69,12 +66,12 @@ public class VacancyController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<Vacancy>> getById(@PathVariable String id) {
-        Optional<Vacancy> vacancy = vacancyService.getById(id);
-        if (vacancy.isPresent()) {
-            BaseResponse<Vacancy> response = new BaseResponse<>(HttpStatus.OK.value(), true, vacancy.get());
+        try {
+            Vacancy vacancy = vacancyService.getById(id);
+            BaseResponse<Vacancy> response = new BaseResponse<>(HttpStatus.OK.value(), true, vacancy);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            throw new NotFoundException("vacancy with that id not found");
+        } catch (IllegalArgumentException e) {
+            throw new NotFoundException(e.getMessage());
         }
     }
 
@@ -97,5 +94,17 @@ public class VacancyController {
         } catch (IllegalArgumentException e) {
             throw new NotFoundException(e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/ranked")
+    public ResponseEntity<BaseResponse<RankVacancyDetailResponse>> getRankedVacancyCandidates(@PathVariable String id,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        SearchRequest request = new SearchRequest(search, page, size);
+        RankVacancyDetailResponse rankedCandidates = vacancyService.rankedCandidates(id, request);
+
+        BaseResponse<RankVacancyDetailResponse> response = new BaseResponse<>(HttpStatus.OK.value(), true,
+                rankedCandidates);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

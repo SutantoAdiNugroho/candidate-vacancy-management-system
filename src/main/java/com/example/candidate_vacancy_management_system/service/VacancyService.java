@@ -1,7 +1,13 @@
 package com.example.candidate_vacancy_management_system.service;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +17,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.candidate_vacancy_management_system.constant.CriteriaType;
+import com.example.candidate_vacancy_management_system.constant.EducationLevel;
+import com.example.candidate_vacancy_management_system.dto.PaginationInfo;
+import com.example.candidate_vacancy_management_system.dto.candidate.RankCandidateResponse;
 import com.example.candidate_vacancy_management_system.dto.candidate.SearchRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.AgeCriteriaRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.CreateCriteriaRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.CreateVacancyRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.EducationLevelRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.GenderCriteriaRequest;
+import com.example.candidate_vacancy_management_system.dto.vacancy.RankVacancyDetailResponse;
 import com.example.candidate_vacancy_management_system.dto.vacancy.SalaryCriteriaRequest;
 import com.example.candidate_vacancy_management_system.dto.vacancy.UpdateVacancyRequest;
 import com.example.candidate_vacancy_management_system.model.AgeCriteria;
@@ -64,17 +74,49 @@ public class VacancyService {
         }
     }
 
-    public Optional<Vacancy> getById(String id) {
-        return vacancyRepository.findById(id);
+    public RankVacancyDetailResponse rankedCandidates(String id, SearchRequest request) {
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+
+        Vacancy vacancy = this.getById(id);
+        List<Candidate> candidates = candidateRepository.findAll();
+
+        RankVacancyDetailResponse response = new RankVacancyDetailResponse();
+        response.setVacancyName(vacancy.getName());
+        response.setVacancyDescription(vacancy.getDescription());
+
+        // get ranked candidates by it's score
+        List<RankCandidateResponse> rankedCandidates = candidates.stream().map(candidate -> {
+            Integer score = calculateScore(candidate, vacancy.getCriteria());
+            return new RankCandidateResponse(candidate.getId(), candidate.getFirstName(), candidate.getLastName(),
+                    candidate.getEmail(), score);
+        }).sorted(Comparator.comparingInt(RankCandidateResponse::getScore).reversed()).collect(Collectors.toList());
+
+        // set manual pagination
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), rankedCandidates.size());
+
+        List<RankCandidateResponse> paginateCandidates = new ArrayList<>();
+        if (start <= end)
+            paginateCandidates = rankedCandidates.subList(start, end);
+
+        response.setCandidates(paginateCandidates);
+        response.setPagination(PaginationInfo.createPagination(pageable, rankedCandidates));
+
+        return response;
     }
 
-    public void delete(String id) {
-        Optional<Vacancy> vacancy = this.getById(id);
+    public Vacancy getById(String id) {
+        Optional<Vacancy> vacancy = vacancyRepository.findById(id);
         if (!vacancy.isPresent()) {
             throw new IllegalArgumentException("vacancy with this id not exist");
         }
 
-        vacancyRepository.deleteById(id);
+        return vacancy.get();
+    }
+
+    public void delete(String id) {
+        Vacancy vacancy = this.getById(id);
+        vacancyRepository.deleteById(vacancy.getId());
     }
 
     public Vacancy update(String id, UpdateVacancyRequest request) {
@@ -86,6 +128,48 @@ public class VacancyService {
             vacancy.setCriteria(buildCriteria(request.getCriteria()));
             return vacancyRepository.save(vacancy);
         }).orElseThrow(() -> new IllegalArgumentException("vacancy with that id was not found"));
+    }
+
+    // private functions
+
+    private Integer calculateScore(Candidate candidate, List<Criteria> criterias) {
+        Integer totalScore = 0;
+        for (Criteria criteria : criterias) {
+            if (isCriteriaMatched(candidate, criteria))
+                totalScore += criteria.getWeight();
+        }
+        return totalScore;
+    }
+
+    private boolean isCriteriaMatched(Candidate candidate, Criteria criteria) {
+        if (criteria instanceof AgeCriteria) {
+            AgeCriteria aCriteria = (AgeCriteria) criteria;
+
+            LocalDate birthDate = candidate.getBirthdate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            Integer currentAge = Period.between(birthDate, LocalDate.now()).getYears();
+
+            return (currentAge >= aCriteria.getMinAge()) && (currentAge <= aCriteria.getMaxAge());
+        } else if (criteria instanceof GenderCriteria) {
+            GenderCriteria gCriteria = (GenderCriteria) criteria;
+            return candidate.getGender().equalsIgnoreCase(gCriteria.getGender());
+        } else if (criteria instanceof SalaryCriteria) {
+            SalaryCriteria sCriteria = (SalaryCriteria) criteria;
+
+            return (candidate.getCurrentSalary() >= sCriteria.getMinSalary())
+                    && (candidate.getCurrentSalary() <= sCriteria.getMaxSalary());
+        } else if (criteria instanceof EducationLevelCriteria) {
+            EducationLevelCriteria eCriteria = (EducationLevelCriteria) criteria;
+            List<String> edLevels = List.of(EducationLevel.SD.toString(), EducationLevel.SMP.toString(),
+                    EducationLevel.SMA.toString(), EducationLevel.SARJANA.toString(), EducationLevel.MASTER.toString(),
+                    EducationLevel.DOKTOR.toString());
+
+            Integer cIndex = edLevels.indexOf(candidate.getEducationLevel());
+            Integer minLevelIndex = edLevels.indexOf(eCriteria.getMinEducationLevel());
+
+            return cIndex >= minLevelIndex;
+        }
+
+        return false;
     }
 
     private void validateVacancyInput(CreateVacancyRequest request) {
@@ -199,6 +283,9 @@ public class VacancyService {
         }
         if (request.getWeight() == null) {
             throw new IllegalArgumentException("weight on criteria educationalLevel is required");
+        }
+        if (!EducationLevel.isValidEducationLevel(request.getMinEducationLevel())) {
+            throw new IllegalArgumentException("invalid minEducationLevel input");
         }
     }
 }
