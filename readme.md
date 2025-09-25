@@ -1,6 +1,6 @@
 # Candidate and Vacancy Management API
 
-## This project is candidate and vacancy management system built using Spring Boot 3.5.6 and MongoDB, part of technical test Jobseeker Company
+## This project is candidate and vacancy management system built using Spring Boot 3.5.6 and MongoDB part of technical test Jobseeker Company
 
 ## How to run this project?
 
@@ -11,28 +11,26 @@
 * MongoDB (optional, if not using Docker Compose for database)
 
 ### Setup
-* Clone the repository:
-```console
+1. Clone the repository:
+```bash
 git clone https://github.com/SutantoAdiNugroho/candidate-vacancy-management-system.git
 ```
-* Configure database:
-
-If don't have mongodb instance installed on local computer, we can run docker compose command below
-```console
+2. Configure database:
+* If don't have mongodb instance installed on local computer, we can run docker compose command below</p>
+```bash
 docker-compose up
 ```
-Open `src/main/resources/application.properties` and update MongoDB connection
+* Open `src/main/resources/application.properties` and update MongoDB connection
 ```console
 spring.data.mongodb.uri=mongodb://localhost:27017/db_candidate_management
 ```
-
-* Run application:
-```console
+3. Run application:
+```bash
 mvn spring-boot:run
 ```
 The API will be available at http://localhost:8080
 
-### Setup
+### API
 Following API endpoints are available for interaction with backend
 
 #### Candidate API
@@ -50,4 +48,4 @@ Following API endpoints are available for interaction with backend
 * `DELETE /api/vacancies/:id` - Delete a vacancy
 * `GET /api/vacancies/:id/ranked` - Ranks candidates for specific vacancy
 
-Full detais of API documentation can be found at [here](https://documenter.getpostman.com/view/9584185/2sB3BDJAWy#intro)
+Full details of API documentation can be found at [here](https://documenter.getpostman.com/view/9584185/2sB3BDJAWy#intro)
