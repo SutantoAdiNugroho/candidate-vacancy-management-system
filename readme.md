@@ -2,6 +2,11 @@
 
 ## This project is candidate and vacancy management system built using Spring Boot 3.5.6 and MongoDB part of technical test Jobseeker Company
 
+### Technology
+* Backend: Java, Spring Boot 3.5.6
+* Database using MongoDB
+* Build tool using Maven
+
 ## How to run this project?
 
 ### Prerequisites
