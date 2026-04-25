@@ -1,6 +1,6 @@
 # Candidate and Vacancy Management API
 
-## This project is candidate and vacancy management system built using Spring Boot 3.5.6 and MongoDB part of technical test Jobseeker Company
+## This project is candidate and vacancy management system built using Spring Boot 3.5.6 and MongoDB
 
 ### Technology
 * Backend: Java, Spring Boot 3.5.6
